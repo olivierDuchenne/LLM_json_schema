@@ -64,4 +64,17 @@ options:
 python3 LLM_json_schema.py --model models/Mistral-7B-Instruct-v0.1.gguf --json-schema '{"type":"object", "properties":{"country":{"type":"string"}, "captial":{"type":"string"}}}' --prompt "What is the capital of France?\n\n"
 ```
 
+# Citation
+
+If you use this work please cite the following:
+
+```
+@article{author2022title,
+  title={LLM Json Schema},
+  author={Olivier Duchenne},
+  journal={Github},
+  url={https://github.com/olivierDuchenne/LLM_json_schema},
+  year={2023}
+}
+```
 
