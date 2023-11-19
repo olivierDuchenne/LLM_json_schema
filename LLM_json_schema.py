@@ -6,7 +6,18 @@ import json
 from jsonschema import Draft7Validator
 
 
-def main(model_path: str, json_schema: dict, prompt: str):
+def run_inference_constrained_by_json_schema(model_path: str, json_schema: dict, prompt: str):
+    """
+    This function runs inference on a given model, constrained by a JSON schema.
+
+    Parameters:
+    model_path (str): The path to the LLM model in gguf format.
+    json_schema (dict): The JSON schema to enforce.
+    prompt (str): The input prompt.
+
+    Yields:
+    str: The generated text that follows the constraints of the JSON schema.
+    """
     json_schema_completer = None
     if json_schema:
         json_schema_completer = JsonSchemaConstrainer(json_schema)
@@ -22,8 +33,8 @@ def main(model_path: str, json_schema: dict, prompt: str):
             byte_completions = [c.encode() for c in completions]
         return byte_completions
     byte_prompt = prompt.encode()
-    do_inference(prompt=byte_prompt, model_path=model_path, completion_callback=do_completion)
-
+    for chunk in do_inference(prompt=byte_prompt, model_path=model_path, completion_callback=do_completion, verbose=False):
+        yield chunk
 
 def cli():
     parser = argparse.ArgumentParser()
@@ -56,7 +67,7 @@ def cli():
         print("Error: The JSON schema is not a valid json schema.")        
         return
     
-    main(model_path, json_schema, prompt)
+    run_inference_constrained_by_json_schema(model_path, json_schema, prompt)
 
 
 if __name__ == "__main__":
