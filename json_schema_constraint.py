@@ -92,6 +92,16 @@ def auto_complete_object(incomplete_string:str, properties: dict):
     return ["\n}"+end_token]
 
 def auto_complete(incomplete_string, json_schema):
+    """
+    This function auto completes the incomplete string based on the json schema provided.
+
+    Parameters:
+    incomplete_string (str): The string that needs to be auto completed.
+    json_schema (dict): The JSON schema to enforce.
+
+    Returns:
+    list: List of possible completions.
+    """
     if json_schema["type"] == "string":
         return auto_complete_string(incomplete_string)
     elif json_schema["type"] == "number":
@@ -156,6 +166,17 @@ def find_object_end(incomplete_string:str) -> Union[int, None]:
     return None
 
 def find_value_end(incomplete_string:str, json_schema) -> Union[int, None]:
+    """
+    This function finds the end index of a value in a JSON string based on the provided JSON schema.
+    It uses the type of the value specified in the schema to call the appropriate function to find the end of the value.
+    
+    Parameters:
+    incomplete_string (str): The truncated JSON string in which to find the end of the value.
+    json_schema (dict): The JSON schema that specifies the type of the value.
+    
+    Returns:
+    Union[int, None]: The index of the end of the value in the JSON string, or None if the end could not be found because the value is truncated.
+    """
     if json_schema['type'] == 'string':
         return find_string_end(incomplete_string)
     elif json_schema['type'] == 'number':

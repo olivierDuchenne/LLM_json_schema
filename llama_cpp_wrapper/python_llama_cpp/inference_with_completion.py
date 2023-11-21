@@ -80,7 +80,9 @@ def do_inference(prompt, model_path=None, model=None, ctx=None, completion_callb
 
         # Auto-completion
         if len(embd_inp) <= input_consumed and completion_callback is not None:
+            # Compute the auto completions.
             auto_complete_suggestions = completion_callback(history)
+            # If there is only one auto completion's suggestion, directly add it.
             there_is_one_suggestion = auto_complete_suggestions and type(auto_complete_suggestions) is list and len(auto_complete_suggestions) == 1
             if there_is_one_suggestion:
                 new_prompt = auto_complete_suggestions[0]
@@ -98,7 +100,9 @@ def do_inference(prompt, model_path=None, model=None, ctx=None, completion_callb
             logits = llama_cpp.llama_get_logits(ctx)            
             n_vocab = llama_cpp.llama_n_vocab(model)
 
-            # adjust logits based on suggestions
+            # If there is at least two auto-complete's suggestion
+            # (one suggestion case is handle else where),
+            #  adjust logits based on suggestions to make sure than one of the suggestion is chosen.
             if type(auto_complete_suggestions) is list and len(auto_complete_suggestions)>=2:
                 adjust_logits_based_on_suggestions(auto_complete_suggestions, logits, vocab, n_vocab)
 
@@ -141,6 +145,8 @@ def do_inference(prompt, model_path=None, model=None, ctx=None, completion_callb
                 n = llama_cpp.llama_token_to_piece(model, llama_cpp.llama_token(id), buffer, size)
                 assert n <= size
                 chunk = buffer[:n].decode('utf-8')
+                # Yield chunks if they are not part of the input sequence.
+                # If the chunk is part of an autocompletion it should be yield as well.
                 if not is_consuming_inputs or auto_complete_suggestions is not None:
                     yield chunk
                 if verbose:

@@ -37,6 +37,12 @@ def run_inference_constrained_by_json_schema(model_path: str, json_schema: dict,
         yield chunk
 
 def cli():
+    """
+    Command Line Interface for running inference constrained by a JSON schema.
+
+    This function parses command line arguments for model path, prompt, and JSON schema.
+    It then validates the model path and JSON schema, and runs inference using the provided model and prompt, constrained by the JSON schema.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=str, required=True, help="Path to the LLM model in gguf format")
     parser.add_argument("--prompt", type=str, required=True, help="Input prompt")
