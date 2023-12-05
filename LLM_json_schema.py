@@ -73,8 +73,13 @@ def cli():
         print("Error: The JSON schema is not a valid json schema.")        
         return
     
-    run_inference_constrained_by_json_schema(model_path, json_schema, prompt)
+    for chunk in run_inference_constrained_by_json_schema(model_path, json_schema, prompt):
+        print(chunk, end="", flush=True)
+    print("", flush=True)
 
 
 if __name__ == "__main__":
-    cli()
+    for chunk in run_inference_constrained_by_json_schema("models/Mistral-7B-Instruct-v0.1.gguf", {"type":"object", "properties":{"country":{"type":"string"}, "captial":{"type":"string"}}}, "What is the capital of France?\n\n"):
+        print(chunk, end="", flush=True)
+    print("", flush=True)
+    # cli()
