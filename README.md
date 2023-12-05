@@ -8,12 +8,27 @@ The output is guaranteed to have the correct format.
 # Example
 
 ```bash
-python3 LLM_json_schema.py --model models/Mistral-7B-Instruct-v0.1.gguf --json-schema '{"type":"object", "properties":{"country":{"type":"string"}, "capital":{"type":"string"}}}' --prompt "What is the capital of France?\n\n"
+python3 LLM_json_schema.py \
+  --model models/Mistral-7B-Instruct-v0.1.gguf \
+  --json-schema '{"type":"object", "properties":{"country":{"type":"string"}, "capital":{"type":"string"}}}' \
+  --prompt "What is the capital of France?\n\n"
 ```
 
 output:
 ```json
 {"country":"France", "capital":"Paris"}
+```
+
+```bash
+python3 LLM_json_schema.py \
+  --model models/Mistral-7B-Instruct-v0.1.gguf \
+  --json-schema '{"type":"array", "items":{"type":"number"}}' \
+  --prompt "Count until 20.\n\n"
+```
+
+output:
+```json
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 ```
 
 # How does it work?
