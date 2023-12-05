@@ -1,6 +1,6 @@
 import os
 from llama_cpp_wrapper.python_llama_cpp.inference_with_completion import do_inference
-from constrainer import JsonSchemaConstrainer
+from constrainer import JsonSchemaConstrainer, end_token
 import argparse
 import json
 from jsonschema import Draft7Validator
@@ -34,6 +34,9 @@ def run_inference_constrained_by_json_schema(model_path: str, json_schema: dict,
         return byte_completions
     byte_prompt = prompt.encode()
     for chunk in do_inference(prompt=byte_prompt, model_path=model_path, completion_callback=do_completion, verbose=False):
+        if end_token in chunk:
+            yield chunk.replace(end_token, "")
+            return
         yield chunk
 
 def cli():
