@@ -5,7 +5,7 @@ LLM_json_schema can enforce the output of an LLM model to follow a given json sc
 
 The output is guaranteed to have the correct format.
 
-# Example
+# Examples
 
 ```bash
 python3 LLM_json_schema.py \
