@@ -1,6 +1,6 @@
 import os
 from llama_cpp_wrapper.python_llama_cpp.inference_with_completion import do_inference
-from constrainer import JsonSchemaConstrainer, end_token
+from constrainers import JsonSchemaConstrainer, end_token
 import argparse
 import json
 from jsonschema import Draft7Validator
