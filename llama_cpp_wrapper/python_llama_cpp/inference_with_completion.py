@@ -6,6 +6,7 @@ from .model_utils import get_context, get_model
 import sys
 # Import the llama_cpp library
 import llama_cpp
+import re
 
 def get_vocab(model) -> List[str]:
     vocab = []
@@ -22,10 +23,17 @@ def adjust_logits_based_on_suggestions(suggestions: List[str], logits, vocab: Li
     for v in range(n_vocab):
         word = vocab[v]
         for suggestion in suggestions:
-            length = min(len(word), len(suggestion))
+            if isinstance(suggestion, re.Pattern):
+                if suggestion.match(str(word)):
+                    logits[v] += 5
+                    break
+                continue
+            if len(word) > len(suggestion):
+                continue
+            length = len(suggestion)
             if length == 0:
                 continue
-            if word[:length] == suggestion[:length]:
+            elif word[:length] == suggestion[:length]:
                 logits[v] += 5
                 break
 
@@ -83,7 +91,10 @@ def do_inference(prompt, model_path=None, model=None, ctx=None, completion_callb
             # Compute the auto completions.
             auto_complete_suggestions = completion_callback(history)
             # If there is only one auto completion's suggestion, directly add it.
-            there_is_one_suggestion = auto_complete_suggestions and type(auto_complete_suggestions) is list and len(auto_complete_suggestions) == 1
+            there_is_one_suggestion = auto_complete_suggestions \
+                and type(auto_complete_suggestions) is list \
+                and len(auto_complete_suggestions) == 1 \
+                and not isinstance(auto_complete_suggestions[0], re.Pattern)
             if there_is_one_suggestion:
                 new_prompt = auto_complete_suggestions[0]
                 embd_inp2 = (llama_cpp.llama_token * (len(new_prompt) + 1))()
@@ -103,7 +114,7 @@ def do_inference(prompt, model_path=None, model=None, ctx=None, completion_callb
             # If there is at least two auto-complete's suggestion
             # (one suggestion case is handle else where),
             #  adjust logits based on suggestions to make sure than one of the suggestion is chosen.
-            if type(auto_complete_suggestions) is list and len(auto_complete_suggestions)>=2:
+            if auto_complete_suggestions is not None and not there_is_one_suggestion:
                 adjust_logits_based_on_suggestions(auto_complete_suggestions, logits, vocab, n_vocab)
 
             # Create an array of token data

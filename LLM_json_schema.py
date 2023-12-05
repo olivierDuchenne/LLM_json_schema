@@ -30,7 +30,7 @@ def run_inference_constrained_by_json_schema(model_path: str, json_schema: dict,
         # print(f"""[completions:{completions}]""")
         byte_completions = completions
         if isinstance(completions, list):
-            byte_completions = [c.encode() for c in completions]
+            byte_completions = [c.encode() if type(c) is str else c for c in completions]
         return byte_completions
     byte_prompt = prompt.encode()
     for chunk in do_inference(prompt=byte_prompt, model_path=model_path, completion_callback=do_completion, verbose=False):
@@ -79,7 +79,7 @@ def cli():
 
 
 if __name__ == "__main__":
-    for chunk in run_inference_constrained_by_json_schema("models/Mistral-7B-Instruct-v0.1.gguf", {"type":"object", "properties":{"country":{"type":"string"}, "captial":{"type":"string"}}}, "What is the capital of France?\n\n"):
-        print(chunk, end="", flush=True)
-    print("", flush=True)
-    # cli()
+    # for chunk in run_inference_constrained_by_json_schema("models/Mistral-7B-Instruct-v0.1.gguf", {"type":"object", "properties":{"country":{"type":"string"}, "captial":{"type":"string"}}}, "What is the capital of France?\n\n"):
+    #     print(chunk, end="", flush=True)
+    # print("", flush=True)
+    cli()

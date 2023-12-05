@@ -8,7 +8,7 @@ class EarlyEndOfValue(Exception):
     def __init__(self, index):
         self.index = index
 
-ongoing_string_regexp = r'^(?!.*(?<!\\)").*$'
+ongoing_string_regexp = re.compile(r'^(?!.*(?<!\\)").*$')
 
 def auto_complete_string(incomplete_string: str):
     if len(incomplete_string)==0:
@@ -54,7 +54,7 @@ def auto_complete_array(incomplete_string:str, items):
                 return None
             # remove the end token, because we also need to close the object "}" before ending
             item_completions = [c for c in item_completions if c!=end_token]
-            item_completions = [c.replace(end_token, "") if not isinstance(c, ValueEndSymbol) else c for c in item_completions]
+            item_completions = [c.replace(end_token, "") if type(c)is str else c for c in item_completions]
             if item_end == END_NOT_REACHED:
                 return item_completions
             if item_end == CAN_END_OR_CONTINUE:
@@ -74,7 +74,7 @@ def auto_complete_object(incomplete_string:str, properties: dict):
     if bracket_index:
         first_bracket_ind = bracket_index.end()
         ind = first_bracket_ind
-    for property, type in properties.items():
+    for property, val_type in properties.items():
         pattern = f'"{property}":'
         sanitized_pattern = re.escape(pattern)
         match = re.search(r'^\s*,?\s*' + sanitized_pattern, incomplete_string[ind:])
@@ -90,14 +90,14 @@ def auto_complete_object(incomplete_string:str, properties: dict):
                     completion = ", "+pattern
             # return [completion, "}"+end_token]
             return [completion, *current_item_completions]
-        item_end = find_value_end(incomplete_string[ind:], type)
+        item_end = find_value_end(incomplete_string[ind:], val_type)
         if isinstance(item_end, ValueEndSymbol):
-            item_completions = auto_complete(incomplete_string[ind:], type)
+            item_completions = auto_complete(incomplete_string[ind:], val_type)
             if item_completions is None:
                 return None
             # remove the end token, because we also need to close the object "}" before ending
             item_completions = [c for c in item_completions if c!=end_token]
-            item_completions = [c.replace(end_token, "") if not isinstance(c, ValueEndSymbol) else c for c in item_completions]
+            item_completions = [c.replace(end_token, "") if type(c)is str else c for c in item_completions]
             if item_end == END_NOT_REACHED:
                 return item_completions
             if item_end == CAN_END_OR_CONTINUE:
