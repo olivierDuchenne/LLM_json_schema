@@ -1,24 +1,35 @@
-from LLM_constrained.LLM_json_schema.json_schema_constraint import auto_complete, end_token, find_string_end, find_number_end, find_boolean_end, find_array_end, find_object_end
+import json_schema_constraint
+from json_schema_constraint import auto_complete, end_token, find_string_end, \
+    find_number_end, find_boolean_end, find_array_end, find_object_end, ongoing_string_regexp, \
+    END_NOT_REACHED, CAN_END_OR_CONTINUE
 import unittest
+import re
 
 class TestAutoCompleteString(unittest.TestCase):
+    def test_regexp(self):
+        # good
+        self.assertIsNotNone(re.match(ongoing_string_regexp, 'test'))
+        self.assertIsNotNone(re.match(ongoing_string_regexp, 'te\\"st'))
+        # bad
+        self.assertIsNone(re.match(ongoing_string_regexp, 'te"st'))
+        self.assertIsNone(re.match(ongoing_string_regexp, '"test'))
     def test_empty_string(self):
         self.assertEqual(auto_complete("", {"type": "string"}), ['"'])
 
     def test_single_quote(self):
-        self.assertEqual(auto_complete('"', {"type": "string"}), None)
-        self.assertEqual(auto_complete(' "', {"type": "string"}), None)
-        self.assertEqual(auto_complete('  "', {"type": "string"}), None)
+        self.assertEqual(auto_complete('"', {"type": "string"}), [ongoing_string_regexp])
+        self.assertEqual(auto_complete(' "', {"type": "string"}), [ongoing_string_regexp])
+        self.assertEqual(auto_complete('  "', {"type": "string"}), [ongoing_string_regexp])
 
     def test_quote_with_character(self):
-        self.assertEqual(auto_complete('"a', {"type": "string"}), None)
+        self.assertEqual(auto_complete('"a', {"type": "string"}), [ongoing_string_regexp])
 
     def test_quote_with_character_and_closing_quote(self):
         self.assertEqual(auto_complete('"a"', {"type": "string"}), [end_token])
         self.assertEqual(auto_complete('""', {"type": "string"}), [end_token])
 
     def test_quote_with_character_and_escaped_character(self):
-        self.assertEqual(auto_complete('"a\\"5', {"type": "string"}), None)
+        self.assertEqual(auto_complete('"a\\"5', {"type": "string"}), [ongoing_string_regexp])
 
 class TestAutoCompleteNumber(unittest.TestCase):
     def test_empty_string(self):
@@ -82,25 +93,25 @@ class TestFindStringEnd(unittest.TestCase):
     def test_find_string_end(self):
         self.assertEqual(find_string_end('"coucou"  '), 8)
         self.assertEqual(find_string_end('  "coucou"  '), 10)
-        self.assertEqual(find_string_end('  coucou"  "'), None)
+        self.assertEqual(find_string_end('  coucou"  "'), END_NOT_REACHED)
         self.assertEqual(find_string_end('"cou\\"cou"  '), 10)
         self.assertEqual(find_string_end('"cou\\ncou"  '), 10)
         self.assertEqual(find_string_end('"a", "b"'), 3)
 
 class TestFindNumberEnd(unittest.TestCase):
     def test_find_number_end_empty_string(self):
-        self.assertEqual(find_number_end(""), None)
-
+        self.assertEqual(find_number_end(""), END_NOT_REACHED)
     def test_find_number_end_positive_integer(self):
         self.assertEqual(find_number_end(" 1 "), 2)
-
     def test_find_number_end_negative_scientific_notation(self):
         self.assertEqual(find_number_end(" -12.4e+10 "), 10)
+    def test_find_number_end_empty_string(self):
+        self.assertEqual(find_number_end("123"), CAN_END_OR_CONTINUE)
 
 class TestFindBooleanEnd(unittest.TestCase):
     def test_find_boolean_end(self):
         self.assertEqual(find_boolean_end(" true "), 5)
-        self.assertEqual(find_boolean_end(" tru "), None)
+        self.assertEqual(find_boolean_end(" tru "), END_NOT_REACHED)
 
 class TestFindArrayEnd(unittest.TestCase):
     def test_find_array_end(self):
@@ -121,8 +132,8 @@ class TestAutoCompleteArray(unittest.TestCase):
         self.assertEqual(auto_complete(" ", {"type":"array", "items":{"type":"string"}}), ["["])
         self.assertEqual(auto_complete("[", {"type":"array", "items":{"type":"string"}}), ['"'])
         self.assertEqual(auto_complete(" [", {"type":"array", "items":{"type":"string"}}), ['"'])
-        self.assertEqual(auto_complete('["', {"type":"array", "items":{"type":"string"}}), None)
-        self.assertEqual(auto_complete(' ["', {"type":"array", "items":{"type":"string"}}), None)
+        self.assertEqual(auto_complete('["', {"type":"array", "items":{"type":"string"}}), [ongoing_string_regexp])
+        self.assertEqual(auto_complete(' ["', {"type":"array", "items":{"type":"string"}}), [ongoing_string_regexp])
         self.assertEqual(auto_complete('["a"', {"type":"array", "items":{"type":"string"}}), [", ", "]"+end_token])
         self.assertEqual(auto_complete(' ["a"', {"type":"array", "items":{"type":"string"}}), [", ", "]"+end_token])
         self.assertEqual(auto_complete('["a", ', {"type":"array", "items":{"type":"string"}}), ['"'])
@@ -131,19 +142,22 @@ class TestAutoCompleteArray(unittest.TestCase):
         self.assertEqual(auto_complete(' [ [', {"type":"array", "items":{"type":"array", "items":{"type":"string"}}}), ['"'])
         self.assertEqual(auto_complete('["a", "a"', {"type":"array", "items":{"type":"string"}}), [", ", "]"+end_token])
         self.assertEqual(auto_complete(' ["a", "a"', {"type":"array", "items":{"type":"string"}}), [", ", "]"+end_token])
+        self.assertEqual(auto_complete(' [', {"type":"array", "items":{"type":"number"}}), ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '.'])
+        self.assertEqual(auto_complete(' [1', {"type":"array", "items":{"type":"number"}}), [', ', ']'+end_token, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'e'])
 
 class TestAutoCompleteObject(unittest.TestCase):
     def test_auto_complete(self):
         self.assertEqual(auto_complete("", {"type":"object", "properties":{}}), ['{'])
-        self.assertEqual(auto_complete("{", {"type":"object", "properties":{"coucou":{"type":"string"}}}), ['\n  "coucou": ', '}'+end_token])
+        self.assertEqual(auto_complete("{", {"type":"object", "properties":{"coucou":{"type":"string"}}}), ['"coucou":'])
         self.assertEqual(auto_complete('{"coucou":', {"type":"object", "properties":{"coucou":{"type":"string"}}}), ['"'])
-        self.assertEqual(auto_complete('{"coucou":"a"', {"type":"object", "properties":{"coucou":{"type":"string"}}}), ['\n}'+end_token])
+        self.assertEqual(auto_complete('{"coucou":"a"', {"type":"object", "properties":{"coucou":{"type":"string"}}}), ['}'+end_token])
         self.assertEqual(auto_complete('{"coucou":"a"}', {"type":"object", "properties":{"coucou":{"type":"string"}}}), [end_token])
         self.assertEqual(auto_complete('{"coucou":"a", "caca":', {"type":"object", "properties":{"coucou":{"type":"string"}, "caca":{"type":"boolean"}}}), ['true', 'false'])
-        self.assertEqual(auto_complete('{"coucou":"a", "caca":true', {"type":"object", "properties":{"coucou":{"type":"string"}, "caca":{"type":"boolean"}}}), ['\n}'+end_token])
+        self.assertEqual(auto_complete('{"coucou":"a", "caca":true', {"type":"object", "properties":{"coucou":{"type":"string"}, "caca":{"type":"boolean"}}}), ['}'+end_token])
         self.assertEqual(auto_complete('{"coucou":', {"type":"object", "properties":{"coucou":{"type":"object", "properties":{"caca": {"type":"boolean"}}}}}), ['{'])
-        self.assertEqual(auto_complete('{"coucou":{', {"type":"object", "properties":{"coucou":{"type":"object", "properties":{"caca": {"type":"boolean"}}}}}), ['\n  "caca": ', '}'])
-        self.assertEqual(auto_complete('{"coucou":{"caca":true', {"type":"object", "properties":{"coucou":{"type":"object", "properties":{"caca": {"type":"boolean"}}}}}), ['\n}'])
+        self.assertEqual(auto_complete('{"coucou":{', {"type":"object", "properties":{"coucou":{"type":"object", "properties":{"caca": {"type":"boolean"}}}}}), ['"caca":'])
+        self.assertEqual(auto_complete('{"coucou":{"caca":true', {"type":"object", "properties":{"coucou":{"type":"object", "properties":{"caca": {"type":"boolean"}}}}}), ['}'])
+        self.assertEqual(auto_complete('{"coucou":1', {"type":"object", "properties":{"coucou":{"type":"number"}}}), ['}'+end_token, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'e'])
 
 
 if __name__ == '__main__':
