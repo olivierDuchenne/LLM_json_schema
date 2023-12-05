@@ -25,17 +25,24 @@ def adjust_logits_based_on_suggestions(suggestions: List[str], logits, vocab: Li
         for suggestion in suggestions:
             if isinstance(suggestion, re.Pattern):
                 if suggestion.match(str(word)):
-                    logits[v] += 5
+                    logits[v] += 5.0
                     break
                 continue
             if len(word) > len(suggestion):
                 continue
-            length = len(suggestion)
+            # length = len(suggestion)
+            length = min(len(word), len(suggestion))
             if length == 0:
                 continue
             elif word[:length] == suggestion[:length]:
-                logits[v] += 5
+                # print(word)
+                # print(logits[v])
+                logits[v] += 5.0
+                # print(logits[v])
                 break
+        else:
+            logits[v] -= -5.0
+
 
 def do_inference(prompt, model_path=None, model=None, ctx=None, completion_callback=None, verbose=True):
     if model is None and model_path is not None:

@@ -79,7 +79,10 @@ def cli():
 
 
 if __name__ == "__main__":
-    # for chunk in run_inference_constrained_by_json_schema("models/Mistral-7B-Instruct-v0.1.gguf", {"type":"object", "properties":{"country":{"type":"string"}, "captial":{"type":"string"}}}, "What is the capital of France?\n\n"):
+    # for chunk in run_inference_constrained_by_json_schema("models/Mistral-7B-Instruct-v0.1.gguf", {"type":"object", "properties":{"country":{"type":"string"}, "capital":{"type":"string"}}}, "What is the capital of France?\n\n"):
+    #     print(chunk, end="", flush=True)
+    # print("", flush=True)
+    # for chunk in run_inference_constrained_by_json_schema("models/Mistral-7B-Instruct-v0.1.gguf", {"type":"array", "items":{"type":"number"}}, "Count until 20.\n\n"):
     #     print(chunk, end="", flush=True)
     # print("", flush=True)
     cli()
