@@ -98,7 +98,7 @@ print("")
 If you use this work please cite the following:
 
 ```
-@article{author2022title,
+@article{duchenne2023llm_json_schema,
   title={LLM Json Schema},
   author={Olivier Duchenne},
   journal={Github},
